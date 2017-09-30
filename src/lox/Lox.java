@@ -35,9 +35,21 @@ public class Lox {
         InputStreamReader input = new InputStreamReader(System.in);
         BufferedReader reader = new BufferedReader(input);
 
+        StringBuilder lines = new StringBuilder();
+
         for (;;) {
             System.out.print("> ");
-            run(reader.readLine());
+            String line = reader.readLine();
+            if(line.endsWith(" \\")){
+                line = line.replace(" \\","");
+                lines.append("\n").append(line);
+                continue;
+            }
+            else{
+                lines.append("\n").append(line);
+                run(lines.toString());
+                lines = new StringBuilder();
+            }
             hadError = false;
         }
     }
