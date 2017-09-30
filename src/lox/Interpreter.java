@@ -5,8 +5,13 @@ import java.util.List;
 
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>  {
 
-    final Environment globals = new Environment();
-    private Environment environment = globals;
+    static final Environment globals = new Environment();
+    public Environment environment = globals;
+
+    public Interpreter(Environment e){
+        this();
+        environment = e;
+    }
 
     Interpreter() {
         globals.define("clock", new LoxCallable() {
@@ -91,11 +96,6 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>  {
 
         // Unreachable.
         return null;
-    }
-
-    private void checkNumberOperand(Token operator, Object operand) {
-        if (operand instanceof Double) return;
-        throw new RuntimeError(operator, "Operand must be a number.");
     }
 
     private void checkNumberOperands(Token operator,
@@ -249,7 +249,6 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>  {
             throw new RuntimeError(expr.paren,
                     "Can only call functions and classes.");
         }
-
         LoxCallable function = (LoxCallable)callee;
         if (arguments.size() != function.arity()) {
             throw new RuntimeError(expr.paren, "Expected " +
@@ -257,6 +256,17 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>  {
                     arguments.size() + ".");
         }
         return function.call(this, arguments);
+    }
+
+    @Override
+    public Object visitClassRefExpr(Expr.ClassRef expr) {
+        Object lclass = environment.get(expr.className);
+        if(!(lclass instanceof LClass))
+            throw new RuntimeError(expr.className, "Not a valid class!");
+        if(expr.classRef instanceof Expr.Call)
+            return ((LClass)lclass).call((Expr.Call)expr.classRef);
+        else
+            return ((LClass)lclass).get(expr.classRef);
     }
 
     private String valof(Double d){
@@ -309,7 +319,9 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>  {
         if (stmt.initializer != null) {
             value = evaluate(stmt.initializer);
         }
-
+        if(value instanceof LoxClass){
+            throw new RuntimeError(stmt.name, "Instanitate the class before use!");
+        }
         environment.define(stmt.name.lexeme, value);
         return null;
     }
@@ -336,6 +348,13 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>  {
     }
 
     @Override
+    public Void visitClassDeclStmt(Stmt.ClassDecl stmt) {
+        LoxClass lc = new LoxClass(stmt);
+        environment.define(stmt.name.lexeme, lc);
+        return null;
+    }
+
+    @Override
     public Void visitContinueStmt(Stmt.Continue stmt) {
         throw new ContinueException();
     }
@@ -343,8 +362,23 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>  {
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.value);
-
-        environment.assign(expr.name, value);
+        if(value instanceof LoxClass){
+            throw new RuntimeError(expr.name instanceof Token?(Token)expr.name
+                    :((Expr.ClassRef)expr.name).className,
+                    "Instanitate the class before use!");
+        }
+        if(expr.name instanceof Token)
+            environment.assign((Token)expr.name, value);
+        else{
+            Expr.ClassRef ecl = (Expr.ClassRef)expr.name;
+            if(environment.get(ecl.className) instanceof LClass){
+                LClass lc = (LClass)environment.get(ecl.className);
+                lc.set((Token)ecl.classRef, value);
+            }
+            else{
+                throw new RuntimeError(ecl.className, "Not a class object!");
+            }
+        }
         return value;
     }
 

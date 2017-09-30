@@ -7,6 +7,7 @@ abstract class Expr {
     R visitAssignExpr(Assign expr);
     R visitBinaryExpr(Binary expr);
     R visitCallExpr(Call expr);
+    R visitClassRefExpr(ClassRef expr);
     R visitGroupingExpr(Grouping expr);
     R visitLiteralExpr(Literal expr);
     R visitLogicalExpr(Logical expr);
@@ -15,7 +16,7 @@ abstract class Expr {
   }
 
   static class Assign extends Expr {
-    Assign(Token name, Expr value) {
+    Assign(Object name, Expr value) {
       this.name = name;
       this.value = value;
     }
@@ -24,7 +25,7 @@ abstract class Expr {
       return visitor.visitAssignExpr(this);
     }
 
-    final Token name;
+    final Object name;
     final Expr value;
   }
 
@@ -58,6 +59,20 @@ abstract class Expr {
     final Expr callee;
     final Token paren;
     final List<Object> arguments;
+  }
+
+  static class ClassRef extends Expr {
+    ClassRef(Token className, Object classRef) {
+      this.className = className;
+      this.classRef = classRef;
+    }
+
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitClassRefExpr(this);
+    }
+
+    final Token className;
+    final Object classRef;
   }
 
   static class Grouping extends Expr {

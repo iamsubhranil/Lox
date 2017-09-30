@@ -6,6 +6,7 @@ abstract class Stmt {
   interface Visitor<R> {
     R visitBlockStmt(Block stmt);
     R visitBreakStmt(Break stmt);
+    R visitClassDeclStmt(ClassDecl stmt);
     R visitContinueStmt(Continue stmt);
     R visitExpressionStmt(Expression stmt);
     R visitFunctionStmt(Function stmt);
@@ -38,6 +39,20 @@ abstract class Stmt {
     }
 
     final Token pos;
+  }
+
+  static class ClassDecl extends Stmt {
+    ClassDecl(Token name, List<Stmt> Body) {
+      this.name = name;
+      this.Body = Body;
+    }
+
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitClassDeclStmt(this);
+    }
+
+    final Token name;
+    final List<Stmt> Body;
   }
 
   static class Continue extends Stmt {

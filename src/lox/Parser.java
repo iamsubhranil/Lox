@@ -37,6 +37,7 @@ class Parser {
         try {
             if (match(FUN)) return function("function");
             if (match(VAR)) return varDeclaration();
+            if (match(CLASS)) return classDeclaration();
             return statement();
         } catch (ParseError error) {
             synchronize();
@@ -139,6 +140,28 @@ class Parser {
         Expr value = expression();
         consume(SEMICOLON, "Expect ';' after value.");
         return new Stmt.Print(value);
+    }
+
+    private Stmt classDeclaration(){
+        Token name = consume(IDENTIFIER, "Expected class name!");
+        consume(LEFT_BRACE, "Expected '{' before class body!");
+        List<Stmt> body = new ArrayList<>();
+        while(!check(RIGHT_BRACE)){
+            Stmt decl;
+            if(match(VAR)) {
+                decl = varDeclaration();
+            }
+            else if(match(FUN)){
+                decl = function("class function");
+            }
+            else{
+                throw error(previous(), "A class can only contain variable and function decla" +
+                        "rations!");
+            }
+            body.add(decl);
+        }
+        consume(RIGHT_BRACE,"Expected '}' before class termination!");
+        return new Stmt.ClassDecl(name, body);
     }
 
     private Stmt varDeclaration() {
@@ -357,7 +380,22 @@ class Parser {
         }
 
         if (match(IDENTIFIER)) {
-            return new Expr.Variable(previous());
+            if(check(DOT)) {
+                Token cl = previous();
+                consume(DOT, "Expected '.' after class name!");
+                Token ref = consume(IDENTIFIER, "Expected identifer after class reference!");
+                if (check(SEMICOLON)) {return new Expr.ClassRef(cl, ref);
+                } else if (check(LEFT_PAREN)) {
+                    current--;
+                    return new Expr.ClassRef(cl, call());
+                } else {
+                    consume(EQUAL, "Expected equals after variable reference!");
+                    Expr expr = expression();
+                    return new Expr.Assign(new Expr.ClassRef(cl, ref), expr);
+                }
+            }
+            else
+                return new Expr.Variable(previous());
         }
 
         if (match(LEFT_PAREN)) {

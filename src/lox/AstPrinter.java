@@ -22,6 +22,11 @@ class AstPrinter implements Expr.Visitor<String> {
     }
 
     @Override
+    public String visitClassRefExpr(Expr.ClassRef expr) {
+        return null;
+    }
+
+    @Override
     public String visitGroupingExpr(Expr.Grouping expr) {
         return parenthesize("group", expr.expression);
     }
