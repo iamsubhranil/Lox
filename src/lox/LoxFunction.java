@@ -15,8 +15,16 @@ class LoxFunction implements LoxCallable {
     public Object call(Interpreter interpreter, List<Object> arguments) {
         Environment environment = new Environment(closure);
         for (int i = 0; i < declaration.parameters.size(); i++) {
-            environment.define(declaration.parameters.get(i).lexeme,
-                    arguments.get(i));
+            Token decl = declaration.parameters.get(i);
+            Object arg = arguments.get(i);
+            if(arg instanceof Stmt.Function){
+                Stmt.Function farg = (Stmt.Function)arg;
+                Stmt.Function nfarg = new Stmt.Function(decl, farg.parameters, farg.body);
+                interpreter.visitFunctionStmt(nfarg);
+            }
+            else {
+                environment.define(decl.lexeme, arg);
+            }
         }
 
         try {

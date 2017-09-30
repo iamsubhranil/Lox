@@ -189,7 +189,6 @@ class Parser {
                 if (parameters.size() >= 8) {
                     error(peek(), "Cannot have more than 8 parameters.");
                 }
-
                 parameters.add(consume(IDENTIFIER, "Expect parameter name."));
             } while (match(COMMA));
         }
@@ -312,13 +311,19 @@ class Parser {
     }
 
     private Expr finishCall(Expr callee) {
-        List<Expr> arguments = new ArrayList<>();
+        List<Object> arguments = new ArrayList<>();
         if (!check(RIGHT_PAREN)) {
             do {
                 if (arguments.size() >= 8) {
                     error(peek(), "Cannot have more than 8 arguments.");
                 }
-                arguments.add(expression());
+                if(check(FUN)){
+                    match(FUN);
+                    Stmt.Function nest = function("function");
+                    arguments.add(nest);
+                }
+                else
+                    arguments.add(expression());
             } while (match(COMMA));
         }
 
