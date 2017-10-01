@@ -10,7 +10,6 @@ class Parser {
     private static class ParseError extends RuntimeException {}
     private final List<Token> tokens;
     private int current = 0;
-    private int inloop = 0;
 
     Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -66,15 +65,11 @@ class Parser {
 
     private Stmt breakStatement(){
         Token t = consume(SEMICOLON, "Break statement must end with a ';'.");
-        if(inloop < 1)
-            throw error(t,"Wrong use of 'break', not in a loop!");
         return new Stmt.Break(t);
     }
 
     private Stmt continueStatement(){
         Token t = consume(SEMICOLON, "Continue statement must end with a ';'.");
-        if(inloop < 1)
-            throw error(t, "Wrong use of 'continue', not in a loop!");
         return new Stmt.Continue(t);
     }
 
@@ -102,9 +97,7 @@ class Parser {
         }
         consume(RIGHT_PAREN, "Expect ')' after for clauses.");
 
-        inloop++;
         Stmt body = statement();
-        inloop--;
         if (increment != null) {
             body = new Stmt.Block(Arrays.asList(
                     body,
@@ -157,9 +150,7 @@ class Parser {
         consume(LEFT_PAREN, "Expect '(' after 'while'.");
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expect ')' after condition.");
-        inloop++;
         Stmt body = statement();
-        inloop--;
         return new Stmt.While(condition, body);
     }
 

@@ -57,6 +57,12 @@ public class Lox {
         // Stop if there was a syntax error.
         if (hadError) return;
 
+        Resolver resolver = new Resolver(interpreter);
+        resolver.resolve(statements);
+
+        // Stop if there was a resolution error.
+        if (hadError) return;
+
         interpreter.interpret(statements);
 
         //System.out.println(new AstPrinter().print(expression));
@@ -84,6 +90,14 @@ public class Lox {
 //        error(error.token, "Runtime Error : "+error.getMessage());
         System.err.println("[line "+error.token.line+"] Runtime Error : "+error.getMessage());
         hadRuntimeError = true;
+    }
+
+    static void warning(int line, String message){
+        System.err.println("[Warning : line "+line+"] "+message);
+    }
+
+    static void warning(Token token, String message){
+        warning(token.line, message);
     }
 
 }
