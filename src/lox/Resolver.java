@@ -151,8 +151,11 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     public Void visitCallExpr(Expr.Call expr) {
         resolve(expr.callee);
 
-        for (Expr argument : expr.arguments) {
-            resolve(argument);
+        for (Object argument : expr.arguments) {
+            if(argument instanceof Expr)
+                resolve((Expr)argument);
+            else
+                resolve((Stmt)argument);
         }
 
         return null;
